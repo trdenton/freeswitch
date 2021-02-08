@@ -1295,8 +1295,14 @@ static switch_status_t setup_ringback(originate_global_t *oglobals, originate_st
 					read_impl.actual_samples_per_second == write_impl.actual_samples_per_second) {
 						ringback->asis++;
 						write_frame->codec = switch_core_session_get_write_codec(originate_status[0].peer_session);
-						write_frame->datalen = write_frame->codec->implementation->decoded_bytes_per_packet;
-						switch_log_printf(SWITCH_CHANNEL_CHANNEL_LOG(caller_channel), SWITCH_LOG_DEBUG, "bridge_early_media: passthrough enabled\n");
+						if (write_frame->codec && write_frame->codec->implementation) {
+							write_frame->datalen = write_frame->codec->implementation->decoded_bytes_per_packet;
+							switch_log_printf(SWITCH_CHANNEL_CHANNEL_LOG(caller_channel), SWITCH_LOG_DEBUG, "bridge_early_media: passthrough enabled\n");
+						} else {
+							switch_log_printf(SWITCH_CHANNEL_CHANNEL_LOG(caller_channel), SWITCH_LOG_DEBUG, "%s Media Establishment Failed: no write_frame codec.\n",
+								switch_channel_get_name(caller_channel));
+							switch_goto_status(SWITCH_STATUS_BREAK, end);
+						}
 					} else {
 						switch_log_printf(SWITCH_CHANNEL_CHANNEL_LOG(caller_channel), SWITCH_LOG_DEBUG, "bridge_early_media: codecs don't match (%s@%uh@%di / %s@%uh@%di)\n",
 							read_impl.iananame, read_impl.actual_samples_per_second, read_impl.microseconds_per_packet / 1000,
