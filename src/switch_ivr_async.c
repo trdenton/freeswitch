@@ -5165,6 +5165,7 @@ SWITCH_DECLARE(switch_status_t) switch_ivr_detect_speech_init(switch_core_sessio
 	switch_codec_implementation_t read_impl = { 0 };
 	const char *p;
 	char key[512] = "";
+	uint32_t codec_rate;
 
 	if (sth) {
 		/* Already initialized */
@@ -5179,10 +5180,13 @@ SWITCH_DECLARE(switch_status_t) switch_ivr_detect_speech_init(switch_core_sessio
 
 	switch_core_session_get_read_impl(session, &read_impl);
 
+	//G722 is a special case re. RFC 3551 S4.5.2
+	codec_rate = !strcasecmp(read_impl.iananame, "g722") ? read_impl.samples_per_second : read_impl.actual_samples_per_second;
+
 	if ((status = switch_core_asr_open(ah,
 									   mod_name,
 									   "L16",
-									   read_impl.actual_samples_per_second, dest, &flags,
+									   codec_rate, dest, &flags,
 									   switch_core_session_get_pool(session))) != SWITCH_STATUS_SUCCESS) {
 		return status;
 	}
